@@ -20,6 +20,11 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class ProfileSerializer(serializers.ModelSerializer):
+    research = serializers.SerializerMethodField('research_id')
+
+    def research_id(self, profile):
+        return profile.article.research.id
+
     class Meta:
         model = Profile
         fields = '__all__'
@@ -83,9 +88,18 @@ class ResponseSerializer(serializers.ModelSerializer):
         return instance
 
 
+class MileStoneSerializer(serializers.ModelSerializer):
+    user = serializers.ReadOnlyField(source='user.username')
+    responses = ResponseSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Milestone
+        fields = '__all__'
+
+
 class TakeBindMilestoneSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source='user.username')
-    milestones = serializers.PrimaryKeyRelatedField(many=True,  read_only=True)
+    milestones = MileStoneSerializer(many=True, read_only=True)
 
     class Meta:
         model = Take
@@ -95,18 +109,8 @@ class TakeBindMilestoneSerializer(serializers.ModelSerializer):
         take = Take.objects.create(user=self.context['request'].user, **validated_data)
         milestone = Milestone.objects.create(user=self.context['request'].user,
                                              take=take)
-        Response.objects.create(milestone=milestone,
-                                user=self.context['request'].user)
         return take
 
-
-class MileStoneSerializer(serializers.ModelSerializer):
-    user = serializers.ReadOnlyField(source='user.username')
-    responses = serializers.PrimaryKeyRelatedField(many=True,  read_only=True)
-
-    class Meta:
-        model = Milestone
-        fields = '__all__'
 
 
 

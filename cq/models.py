@@ -73,14 +73,12 @@ class Sentence(models.Model):
 
 
 class Take(models.Model):
-    class Meta:
-        unique_together = (('article', 'question', 'user'),)
     article = models.ForeignKey('Article', on_delete=models.CASCADE, related_name='takes')
     question = models.ForeignKey('Question', on_delete=models.CASCADE, related_name='takes')
     user = models.ForeignKey('auth.User', related_name='takes')
     phase = models.IntegerField()
     created_at = models.DateTimeField(auto_now_add=True)
-    remove = models.BooleanField()
+    remove = models.BooleanField(default=False)
     removed_phase = models.IntegerField(blank=True, null=True)
     removed_at = models.DateTimeField(blank=True, null=True)
 
@@ -92,8 +90,6 @@ class Take(models.Model):
 
 class Response(models.Model):
     milestone = models.ForeignKey('Milestone', related_name='responses', null=True)
-    found = models.NullBooleanField()
-    like_cnt = models.IntegerField(default=0)
     user = models.ForeignKey('auth.User', related_name='responses')
     sentence = models.ForeignKey('Sentence', related_name='responses', null=True)
 
@@ -101,5 +97,7 @@ class Response(models.Model):
 class Milestone(models.Model):
     user = models.ForeignKey('auth.User', related_name='milestones')
     take = models.ForeignKey('Take', related_name='milestones')
+    found = models.NullBooleanField()
+    like_cnt = models.IntegerField(default=0)
     response_at = models.DateTimeField(auto_now_add=True)
 

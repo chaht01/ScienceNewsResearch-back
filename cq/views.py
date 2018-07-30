@@ -1,15 +1,19 @@
+from django.utils.timezone import now
+
 from django.contrib.auth.models import User
 from rest_framework.response import Response as HTTPResponse
 from rest_framework import permissions, viewsets, status
 from cq.permission import CustomProfilePermission, CustomUserPermission
 from rest_framework.decorators import detail_route
+from rest_framework_extensions.mixins import NestedViewSetMixin
+
 from cq.models import Research, Article, Sentence, Question, Take, Response, Milestone, Profile
 from cq.serializers import UserSerializer, ResearchSerializer, ArticleSerializer, QuestionSerializer, \
     SentenceSerializer, TakeSerializer, ResponseSerializer, TakeBindMilestoneSerializer, MileStoneSerializer, \
     ProfileSerializer
 
 
-class ResearchViewSet(viewsets.ModelViewSet):
+class ResearchViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = Research.objects.all()
     serializer_class = ResearchSerializer
     permission_classes = (permissions.IsAuthenticated,)
@@ -21,13 +25,14 @@ class ResearchViewSet(viewsets.ModelViewSet):
         )
 
 
-class ArticleViewSet(viewsets.ModelViewSet):
+class ArticleViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = Article.objects.all()
     serializer_class = ArticleSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
 
-class QuestionViewSet(viewsets.ModelViewSet):
+class QuestionViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+    pagination_class = None
     queryset = Question.objects.all()
     serializer_class = QuestionSerializer
     permission_classes = (permissions.IsAuthenticated,)
@@ -36,47 +41,58 @@ class QuestionViewSet(viewsets.ModelViewSet):
         serializer.save(owner=self.request.user)
 
 
-class SentenceViewSet(viewsets.ModelViewSet):
+class SentenceViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = Sentence.objects.all()
     serializer_class = SentenceSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
 
-class TakeBindMilestoneViewSet(viewsets.ModelViewSet):
+class TakeBindMilestoneViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+    pagination_class = None
     queryset = Take.objects.all()
     serializer_class = TakeBindMilestoneSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
+    def perform_update(self, serializer):
+        is_removed = self.request.data.get('remove')
+        if is_removed:
+            serializer.save(removed_at=now())
+        else:
+            serializer.save()
+
     @detail_route(methods=['patch'])
-    def update_highlight(self, request, pk=None):
+    def renew_milestone(self, request, pk=None):
 
         # will receive take_id, sentence_id(Many)
         take = self.get_object()
+        sentences = request.data.pop('sentences', [])
+
         # create new milestone
-        m_serializer = MileStoneSerializer(data={
-            'take': take.id,
-        })
+        request.data.update(take=take.id)
+        m_serializer = MileStoneSerializer(data=request.data)
         m_serializer.is_valid(raise_exception=True)
-        m_serializer.save(user=self.request.user)
+        milestone = m_serializer.save(user=self.request.user)
 
         # save highlights(Response)
-        sentences = request.data.pop('sentences', [])
         response_form = []
         for sentence_id in sentences:
             response_form.append({
                 'take': take.id,
                 'milestone': m_serializer.data.get('id'),
                 'sentence': sentence_id,
-                'found': request.data.get('found'),
             })
         r_serializer = ResponseSerializer(data=response_form, many=True)
         r_serializer.is_valid(raise_exception=True)
         r_serializer.save(user=self.request.user)
 
-        return HTTPResponse(r_serializer.data)
+        serializer = MileStoneSerializer(milestone, data={'take': take.id, 'responses': r_serializer})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return HTTPResponse(serializer.data)
 
 
-class TakeViewSet(viewsets.ModelViewSet):
+class TakeViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = Take.objects.all()
     serializer_class = TakeSerializer
     permission_classes = (permissions.IsAuthenticated,)
@@ -87,7 +103,7 @@ class TakeViewSet(viewsets.ModelViewSet):
         )
 
 
-class ResponseViewSet(viewsets.ModelViewSet):
+class ResponseViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = Response.objects.all()
     serializer_class = ResponseSerializer
     permission_classes = (permissions.IsAuthenticated,)
@@ -98,13 +114,13 @@ class ResponseViewSet(viewsets.ModelViewSet):
         )
 
 
-class MilestoneViewSet(viewsets.ModelViewSet):
+class MilestoneViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = Milestone.objects.all()
     serializer_class = MileStoneSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
 
-class UserViewSet(viewsets.ModelViewSet):
+class UserViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = (CustomUserPermission,)
@@ -119,7 +135,7 @@ class UserViewSet(viewsets.ModelViewSet):
         return HTTPResponse(serializer.data)
 
 
-class ProfileViewSet(viewsets.ModelViewSet):
+class ProfileViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = Profile.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = (CustomProfilePermission,)
