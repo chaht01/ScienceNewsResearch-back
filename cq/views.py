@@ -1,6 +1,9 @@
+import itertools
+from functools import reduce
 from django.utils.timezone import now
 
 from django.contrib.auth.models import User
+from django.shortcuts import get_object_or_404
 from rest_framework.response import Response as HTTPResponse
 from rest_framework import permissions, viewsets, status
 from cq.permission import CustomProfilePermission, CustomUserPermission
@@ -90,6 +93,23 @@ class TakeBindMilestoneViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         serializer.save()
 
         return HTTPResponse(serializer.data)
+
+    @detail_route(methods=['get'])
+    def suggestions(self, request, pk=None):
+        take = self.get_object()
+        related_takes = Take.objects\
+            .exclude(article=take.article)\
+            .filter(question=take.question)
+        query_set = list(related_takes)
+        milestones = list(map(lambda x: list(x.milestones.filter(copied_from=None).exclude(found=None).exclude(responses=None)), query_set))
+        milestones_flatten = list(itertools.chain.from_iterable(milestones))
+        latest_milestone = None if len(milestones_flatten) is 0 \
+            else reduce(lambda x, y: y if x.response_at < y.response_at else x, milestones_flatten)
+        if latest_milestone is None:
+            responses = Response.objects.none()
+        else:
+            responses = latest_milestone.responses
+        return HTTPResponse(ResponseSerializer(responses, many=True).data)
 
 
 class TakeViewSet(NestedViewSetMixin, viewsets.ModelViewSet):

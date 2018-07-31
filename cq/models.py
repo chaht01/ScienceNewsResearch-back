@@ -100,4 +100,5 @@ class Milestone(models.Model):
     found = models.NullBooleanField()
     like_cnt = models.IntegerField(default=0)
     response_at = models.DateTimeField(auto_now_add=True)
+    copied_from = models.ForeignKey('Milestone', related_name='milestones', null=True)
 

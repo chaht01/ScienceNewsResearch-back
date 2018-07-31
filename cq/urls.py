@@ -21,6 +21,7 @@ researches_router.register(r'articles', views.ArticleViewSet, base_name='researc
 responses_router = router.register(r'responses', views.ResponseViewSet, base_name='response')
 
 questions_router = router.register(r'questions', views.QuestionViewSet, base_name='question')
+questions_router.register(r'takes', views.TakeBindMilestoneViewSet, base_name='questions-take', parents_query_lookups=['question'])
 
 sentences_router = router.register(r'sentences', views.SentenceViewSet, base_name='sentence')
 

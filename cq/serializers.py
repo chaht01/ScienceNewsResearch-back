@@ -1,13 +1,15 @@
+import itertools
+from functools import reduce
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from cq.models import Research, Article, Sentence, Question, Take, Response, Milestone, Profile
 
 
 class UserSerializer(serializers.ModelSerializer):
-    questions = serializers.PrimaryKeyRelatedField(many=True,  read_only=True)
-    takes = serializers.PrimaryKeyRelatedField(many=True,  read_only=True)
-    responses = serializers.PrimaryKeyRelatedField(many=True,  read_only=True)
-    milestones = serializers.PrimaryKeyRelatedField(many=True,  read_only=True)
+    questions = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    takes = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    responses = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    milestones = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     profile = serializers.PrimaryKeyRelatedField( read_only=True)
 
     class Meta:
@@ -79,6 +81,10 @@ class TakeSerializer(serializers.ModelSerializer):
 
 class ResponseSerializer(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source='user.username')
+    text = serializers.SerializerMethodField('text_from_sentence')
+
+    def text_from_sentence(self, response):
+        return str(response.sentence)
 
     class Meta:
         model = Response
@@ -106,9 +112,33 @@ class TakeBindMilestoneSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def create(self, validated_data):
-        take = Take.objects.create(user=self.context['request'].user, **validated_data)
-        milestone = Milestone.objects.create(user=self.context['request'].user,
-                                             take=take)
+        # Check if exist `Take` related to both same `Article` and `Question`
+        related_takes = Take.objects\
+            .filter(article=validated_data.get('article'))\
+            .filter(question=validated_data.get('question'))
+
+        query_set = list(related_takes)
+        milestones = list(map(lambda x: list(x.milestones.filter(copied_from=None).exclude(found=None)), query_set))
+        milestones_flatten = list(itertools.chain.from_iterable(milestones))
+        latest_milestone = None if len(milestones_flatten) is 0 \
+            else reduce(lambda x, y: y if x.response_at < y.response_at else x, milestones_flatten)
+
+        if latest_milestone is not None:
+            take = Take.objects.create(user=self.context['request'].user, **validated_data)
+            milestone = Milestone.objects.create(
+                user=self.context['request'].user,
+                take=take,
+                found=latest_milestone.found,
+                copied_from=latest_milestone)
+            for response in latest_milestone.responses.all():
+                response.pk = None
+                response.milestone = milestone
+                response.user = self.context['request'].user
+                response.save()
+        else:
+            take = Take.objects.create(user=self.context['request'].user, **validated_data)
+            Milestone.objects.create(user=self.context['request'].user, take=take)
+
         return take
 
 
