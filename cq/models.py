@@ -17,7 +17,7 @@ def create_user_profile(sender, instance, created, **kwargs):
     if created:
         Profile.objects.create(
             user=instance,
-            article=(None if instance.is_superuser else articles[(instance.id % articles_cnt)])
+            # article=(None if instance.is_superuser else articles[(instance.id % articles_cnt)])
         )
 
 

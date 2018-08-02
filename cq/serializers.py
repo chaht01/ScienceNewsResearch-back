@@ -25,7 +25,9 @@ class ProfileSerializer(serializers.ModelSerializer):
     research = serializers.SerializerMethodField('research_id')
 
     def research_id(self, profile):
-        return profile.article.research.id
+        if profile.article is not None:
+            return profile.article.research.id
+        return None
 
     class Meta:
         model = Profile

@@ -1,5 +1,7 @@
 import itertools
 from functools import reduce
+
+from django.http import JsonResponse
 from django.utils.timezone import now
 
 from django.contrib.auth.models import User
@@ -36,9 +38,15 @@ class ArticleViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
 
 class QuestionViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     pagination_class = None
-    queryset = Question.objects.all()
     serializer_class = QuestionSerializer
     permission_classes = (permissions.IsAuthenticated,)
+
+    def get_queryset(self):
+        queryset = Question.objects.all()
+        created_phase = self.request.query_params.get('created_phase', None)
+        if created_phase is not None:
+            queryset = queryset.filter(created_phase=created_phase)
+        return queryset
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
@@ -145,6 +153,28 @@ class UserViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     serializer_class = UserSerializer
     permission_classes = (CustomUserPermission,)
     lookup_field = 'username'
+
+    def create(self, request, *args, **kwargs):
+        research_id = request.data.pop('research', None)
+        research = Research.objects.filter(pk=research_id)
+        if not research.exists():
+            return JsonResponse({'non_field_errors': ['Select any research type.']}, status=400)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        instance = serializer.save()
+
+        profile = instance.profile
+        if research_id is not None:
+            articles = Article.objects.filter(research=research)
+            target_article = reduce(lambda x, y: y if x.profiles.count() > y.profiles.count() else x, articles)
+            p_serializer = ProfileSerializer(profile, data={
+                'article': target_article.id,
+                'user': instance.id
+            })
+            p_serializer.is_valid(raise_exception=True)
+            p_serializer.save()
+
+        return HTTPResponse(serializer.data)
 
     def list(self, request, *args, **kwargs):
         if self.request.user.is_superuser:
