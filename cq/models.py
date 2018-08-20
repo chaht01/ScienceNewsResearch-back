@@ -51,17 +51,6 @@ class Article(models.Model):
     def __str__(self):
         return self.title
 
-
-class Question(models.Model):
-    research = models.ForeignKey('Research', related_name='questions')
-    text = models.CharField(max_length=512)
-    owner = models.ForeignKey('auth.User', related_name='questions')
-    created_phase = models.IntegerField()
-
-    def __str__(self):
-        return self.text
-
-
 class Sentence(models.Model):
     text = models.CharField(max_length=1024)
     paragraph_order = models.IntegerField()
@@ -71,8 +60,96 @@ class Sentence(models.Model):
     def __str__(self):
         return self.text
 
+class Codefirst(models.Model):
+    text=models.CharField(max_length=512)
+
+    def __str__(self):
+        return self.text
+
+class Codesecond(models.Model):
+    text=models.CharField(max_length=512)
+    first_code=models.ForeignKey('Codefirst', related_name='secondcodes')
+
+    def __str__(self):
+        return self.text
+
+
+class Question(models.Model):
+    article = models.ForeignKey('Article', related_name='questions')
+    text = models.CharField(max_length=512)
+    questioner = models.ForeignKey('auth.User', related_name='questions')
+    intention = models.CharField(max_length=1024)
+    created_at=models.DateTimeField(blank=True)
+    removed_at=models.DateTimeField(blank=True, null=True)
+    code_first=models.ForeignKey('Codefirst', related_name='questions')
+    code_second=models.ForeignKey('Codesecond', related_name='questions')
+    created_step = models.IntegerField()
+    removed_step = models.IntegerField()
+    copied_from=models.ForeignKey('self', null=True)
+
+    def __str__(self):
+        return self.text
+
+
+class Reftext(models.Model):
+    questioner=models.ForeignKey('auth.User', related_name='reftexts')
+    question=models.ForeignKey('Question', related_name='reftexts')
+    sentence=models.ForeignKey('Sentence', related_name='reftexts')
+
+    def __str__(self):
+        return 'question-' + str(self.question.id) + ':' \
+               + 'sentence-' + str(self.sentence.id) +':'\
+               + 'questioner-' +str(self.questioner.id)
+
+class Shown(models.Model):
+    answerer=models.ForeignKey('auth.User', related_name='showns')
+    question=models.ForeignKey('Question', related_name='showns')
+
+    def __str__(self):
+        return 'answerer-' + str(self.answerer.id) + ':' \
+               + 'question-' + str(self.question.id)
 
 class Take(models.Model):
+    shown = models.ForeignKey('Shown', ralted_name='takes')
+    taken = models.BooleanField()
+
+    def __str__(self):
+        return 'shown-' + str(self.shown.id) + ':' \
+               + 'taken-' + str(self.taken)
+
+class Answertext(models.Model):
+    take = models.ForeignKey('Take', ralated_name='answertexts')
+    sentence = models.ForeignKey('Sentence', related_name='answertexts')
+    answered_at = models.DateTimeField(blank=True)
+
+    def __str__(self):
+        return 'take-' + str(self.take.id) + ':' \
+               + 'sentence-' + str(self.sentence.id)
+
+class Judgement(models.Model):
+    question_first=models.ForeignKey('Question', related_name='judgements')
+    question_second=models.ForeignKey('Question', related_name='judgements')
+    questioner=models.ForeignKey('auth.User', related_name='judgements')
+    score=models.IntegerField()
+    similarity=models.ForeignKey('Similarity', related_name='judgements')
+
+    def __str__(self):
+        return 'question1-' + str(self.question_first.id) + ':' \
+               + 'question2-' + str(self.question_second.id) + ':' \
+               + 'questioner-' + str(self.questioner.id) + ':' \
+               + 'score-' + str(self.score)
+
+class Similarity(models.Model):
+    question_first=models.ForeignKey('Question', related_name='similaritys')
+    question_second=models.ForeignKey('Question', related_name='similaritys')
+    similarity=models.FloatField()
+
+    def __str__(self):
+        return 'question1-' + str(self.question_first.id) + ':' \
+               + 'question2-' + str(self.question_second.id) + ':' \
+               + 'similarity-' + str(self.similarity)
+
+""" class Take(models.Model):
     article = models.ForeignKey('Article', on_delete=models.CASCADE, related_name='takes')
     question = models.ForeignKey('Question', on_delete=models.CASCADE, related_name='takes')
     user = models.ForeignKey('auth.User', related_name='takes')
@@ -101,4 +178,4 @@ class Milestone(models.Model):
     like_cnt = models.IntegerField(default=0)
     response_at = models.DateTimeField(auto_now_add=True)
     copied_from = models.ForeignKey('Milestone', related_name='milestones', null=True)
-
+ """
