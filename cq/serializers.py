@@ -2,8 +2,7 @@ import itertools
 from functools import reduce
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from cq.models import Research, Article, Sentence, Question, Codefirst, Codesecond, Reftext, Shown, Take, Answertext, Judgement, Similarity
-
+from cq.models import Article, Research, Question, Profile, Sentence, Codefirst, Codesecond, Reftext, Shown, Take, Answertext, Judgement, Similarity
 
 class UserSerializer(serializers.ModelSerializer):
     questions = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
@@ -85,7 +84,8 @@ class QuestionSerializer(serializers.ModelSerializer):
     questioner = serializers.ReadOnlyField(source='questioner.username')
     reftexts = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     showns = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    judgements = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    judgements_first = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    judgements_second = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Question
@@ -112,7 +112,8 @@ class TakeSerializer(serializers.ModelSerializer):
 
 
 class SimilaritySerializer(serializers.ModelSerializer):
-    judgements = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    similaritys_first = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    similaritys_second = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Similarity

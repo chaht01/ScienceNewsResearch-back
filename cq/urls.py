@@ -12,25 +12,25 @@ articles_router = router.register(r'articles', views.ArticleViewSet, base_name='
 
 users_router = router.register(r'users', views.UserViewSet, base_name='user')
 users_router.register(r'profiles', views.ProfileViewSet, base_name='users-profile', parents_query_lookups=['user'])
-users_router.register(r'takes', views.TakeBindMilestoneViewSet, base_name='users-take', parents_query_lookups=['user'])
+#users_router.register(r'takes', views.TakeBindMilestoneViewSet, base_name='users-take', parents_query_lookups=['user'])
 
 researches_router = router.register(r'researches', views.ResearchViewSet, base_name='research')
 researches_router.register(r'questions', views.QuestionViewSet, base_name='researches-question', parents_query_lookups=['research'])
 researches_router.register(r'articles', views.ArticleViewSet, base_name='researches-article', parents_query_lookups=['research'])
 
-responses_router = router.register(r'responses', views.ResponseViewSet, base_name='response')
+#responses_router = router.register(r'responses', views.ResponseViewSet, base_name='response')
 
 questions_router = router.register(r'questions', views.QuestionViewSet, base_name='question')
-questions_router.register(r'takes', views.TakeBindMilestoneViewSet, base_name='questions-take', parents_query_lookups=['question'])
+#questions_router.register(r'takes', views.TakeBindMilestoneViewSet, base_name='questions-take', parents_query_lookups=['question'])
 
 sentences_router = router.register(r'sentences', views.SentenceViewSet, base_name='sentence')
 
-takes_router = router.register(r'takes', views.TakeBindMilestoneViewSet, base_name='take')
-takes_router.register(r'milestones', views.MilestoneViewSet, base_name='takes-milestone', parents_query_lookups=['take'])\
-    .register(r'responses', views.ResponseViewSet, base_name='takes-milestones-response', parents_query_lookups=['milestone__take', 'milestone'])
+#takes_router = router.register(r'takes', views.TakeBindMilestoneViewSet, base_name='take')
+#takes_router.register(r'milestones', views.MilestoneViewSet, base_name='takes-milestone', parents_query_lookups=['take'])\
+#    .register(r'responses', views.ResponseViewSet, base_name='takes-milestones-response', parents_query_lookups=['milestone__take', 'milestone'])
 
-milestones_router = router.register(r'milestones', views.MilestoneViewSet, base_name='milestone')
-milestones_router.register(r'responses', views.ResponseViewSet, base_name='milestones-response', parents_query_lookups=['milestone'])
+#milestones_router = router.register(r'milestones', views.MilestoneViewSet, base_name='milestone')
+#milestones_router.register(r'responses', views.ResponseViewSet, base_name='milestones-response', parents_query_lookups=['milestone'])
 
 profiles_router = router.register(r'profiles', views.ProfileViewSet, base_name='profile')
 

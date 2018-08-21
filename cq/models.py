@@ -110,7 +110,7 @@ class Shown(models.Model):
                + 'question-' + str(self.question.id)
 
 class Take(models.Model):
-    shown = models.ForeignKey('Shown', ralted_name='takes')
+    shown = models.ForeignKey('Shown', related_name='takes')
     taken = models.BooleanField()
 
     def __str__(self):
@@ -118,7 +118,7 @@ class Take(models.Model):
                + 'taken-' + str(self.taken)
 
 class Answertext(models.Model):
-    take = models.ForeignKey('Take', ralated_name='answertexts')
+    take = models.ForeignKey('Take', related_name='answertexts')
     sentence = models.ForeignKey('Sentence', related_name='answertexts')
     answered_at = models.DateTimeField(blank=True)
 
@@ -127,8 +127,8 @@ class Answertext(models.Model):
                + 'sentence-' + str(self.sentence.id)
 
 class Judgement(models.Model):
-    question_first=models.ForeignKey('Question', related_name='judgements')
-    question_second=models.ForeignKey('Question', related_name='judgements')
+    question_first=models.ForeignKey('Question', related_name='judgements_first')
+    question_second=models.ForeignKey('Question', related_name='judgements_second')
     questioner=models.ForeignKey('auth.User', related_name='judgements')
     score=models.IntegerField()
     similarity=models.ForeignKey('Similarity', related_name='judgements')
@@ -140,8 +140,8 @@ class Judgement(models.Model):
                + 'score-' + str(self.score)
 
 class Similarity(models.Model):
-    question_first=models.ForeignKey('Question', related_name='similaritys')
-    question_second=models.ForeignKey('Question', related_name='similaritys')
+    question_first=models.ForeignKey('Question', related_name='similaritys_first')
+    question_second=models.ForeignKey('Question', related_name='similaritys_second')
     similarity=models.FloatField()
 
     def __str__(self):
