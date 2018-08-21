@@ -42,9 +42,9 @@ class Research(models.Model):
 
 
 class Article(models.Model):
-    research = models.ForeignKey('Research', related_name='articles')
+    research = models.ForeignKey('Research', related_name='articles',null=True)
     title = models.CharField(max_length=1024)
-    date = models.DateTimeField()
+#    date = models.DateTimeField()
     publisher = models.CharField(max_length=100)
     link = models.CharField(max_length=1024)
 
@@ -55,7 +55,7 @@ class Sentence(models.Model):
     text = models.CharField(max_length=1024)
     paragraph_order = models.IntegerField()
     order = models.IntegerField()
-    article = models.ForeignKey('Article', related_name='sentences')
+    article = models.ForeignKey('Article', related_name='sentences',null=True)
 
     def __str__(self):
         return self.text
@@ -68,23 +68,23 @@ class Codefirst(models.Model):
 
 class Codesecond(models.Model):
     text=models.CharField(max_length=512)
-    first_code=models.ForeignKey('Codefirst', related_name='secondcodes')
+    first_code=models.ForeignKey('Codefirst', related_name='secondcodes',null=True)
 
     def __str__(self):
         return self.text
 
 
 class Question(models.Model):
-    article = models.ForeignKey('Article', related_name='questions')
+    article = models.ForeignKey('Article', related_name='questions',null=True)
     text = models.CharField(max_length=512)
     questioner = models.ForeignKey('auth.User', related_name='questions')
-    intention = models.CharField(max_length=1024)
-    created_at=models.DateTimeField(blank=True)
-    removed_at=models.DateTimeField(blank=True, null=True)
-    code_first=models.ForeignKey('Codefirst', related_name='questions')
-    code_second=models.ForeignKey('Codesecond', related_name='questions')
-    created_step = models.IntegerField()
-    removed_step = models.IntegerField()
+    intention = models.CharField(max_length=1024, default='no intention')
+#    created_at=models.DateTimeField(blank=True)
+#    removed_at=models.DateTimeField(blank=True, null=True)
+    code_first=models.ForeignKey('Codefirst', related_name='questions',null=True)
+    code_second=models.ForeignKey('Codesecond', related_name='questions',null=True)
+    created_step = models.IntegerField(default=0)
+    removed_step = models.IntegerField(default=0)
     copied_from=models.ForeignKey('self', null=True)
 
     def __str__(self):
@@ -93,8 +93,8 @@ class Question(models.Model):
 
 class Reftext(models.Model):
     questioner=models.ForeignKey('auth.User', related_name='reftexts')
-    question=models.ForeignKey('Question', related_name='reftexts')
-    sentence=models.ForeignKey('Sentence', related_name='reftexts')
+    question=models.ForeignKey('Question', related_name='reftexts',null=True)
+    sentence=models.ForeignKey('Sentence', related_name='reftexts',null=True)
 
     def __str__(self):
         return 'question-' + str(self.question.id) + ':' \
@@ -103,14 +103,14 @@ class Reftext(models.Model):
 
 class Shown(models.Model):
     answerer=models.ForeignKey('auth.User', related_name='showns')
-    question=models.ForeignKey('Question', related_name='showns')
+    question=models.ForeignKey('Question', related_name='showns',null=True)
 
     def __str__(self):
         return 'answerer-' + str(self.answerer.id) + ':' \
                + 'question-' + str(self.question.id)
 
 class Take(models.Model):
-    shown = models.ForeignKey('Shown', related_name='takes')
+    shown = models.ForeignKey('Shown', related_name='takes',null=True)
     taken = models.BooleanField()
 
     def __str__(self):
@@ -118,20 +118,20 @@ class Take(models.Model):
                + 'taken-' + str(self.taken)
 
 class Answertext(models.Model):
-    take = models.ForeignKey('Take', related_name='answertexts')
-    sentence = models.ForeignKey('Sentence', related_name='answertexts')
-    answered_at = models.DateTimeField(blank=True)
+    take = models.ForeignKey('Take', related_name='answertexts',null=True)
+    sentence = models.ForeignKey('Sentence', related_name='answertexts',null=True)
+ #   answered_at = models.DateTimeField(blank=True)
 
     def __str__(self):
         return 'take-' + str(self.take.id) + ':' \
                + 'sentence-' + str(self.sentence.id)
 
 class Judgement(models.Model):
-    question_first=models.ForeignKey('Question', related_name='judgements_first')
-    question_second=models.ForeignKey('Question', related_name='judgements_second')
+    question_first=models.ForeignKey('Question', related_name='judgements_first',null=True)
+    question_second=models.ForeignKey('Question', related_name='judgements_second',null=True)
     questioner=models.ForeignKey('auth.User', related_name='judgements')
     score=models.IntegerField()
-    similarity=models.ForeignKey('Similarity', related_name='judgements')
+    similarity=models.ForeignKey('Similarity', related_name='judgements',null=True)
 
     def __str__(self):
         return 'question1-' + str(self.question_first.id) + ':' \
@@ -140,8 +140,8 @@ class Judgement(models.Model):
                + 'score-' + str(self.score)
 
 class Similarity(models.Model):
-    question_first=models.ForeignKey('Question', related_name='similaritys_first')
-    question_second=models.ForeignKey('Question', related_name='similaritys_second')
+    question_first=models.ForeignKey('Question', related_name='similaritys_first',null=True)
+    question_second=models.ForeignKey('Question', related_name='similaritys_second',null=True)
     similarity=models.FloatField()
 
     def __str__(self):
