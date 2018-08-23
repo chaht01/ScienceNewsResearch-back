@@ -25,6 +25,7 @@ questions_router = router.register(r'questions', views.QuestionViewSet, base_nam
 
 sentences_router = router.register(r'sentences', views.SentenceViewSet, base_name='sentence')
 
+codesecond_router = router.register(r'codeseconds', views.CodesecondViewSet, base_name='codesecond')
 #takes_router = router.register(r'takes', views.TakeBindMilestoneViewSet, base_name='take')
 #takes_router.register(r'milestones', views.MilestoneViewSet, base_name='takes-milestone', parents_query_lookups=['take'])\
 #    .register(r'responses', views.ResponseViewSet, base_name='takes-milestones-response', parents_query_lookups=['milestone__take', 'milestone'])

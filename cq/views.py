@@ -40,12 +40,12 @@ class QuestionViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     pagination_class = None
     serializer_class = QuestionSerializer
     permission_classes = (permissions.IsAuthenticated,)
-
+    
     def get_queryset(self):
         queryset = Question.objects.all()
-        created_phase = self.request.query_params.get('created_phase', None)
-        if created_phase is not None:
-            queryset = queryset.filter(created_phase=created_phase)
+        created_step = self.request.query_params.get('created_step', None)
+        if created_step is not None:
+            queryset = queryset.filter(created_step=created_step)
         return queryset
 
     def perform_create(self, serializer):
@@ -56,7 +56,19 @@ class SentenceViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = Sentence.objects.all()
     serializer_class = SentenceSerializer
     permission_classes = (permissions.IsAuthenticated,)
-##
+
+class CodesecondViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+    queryset = Codesecond.objects.all()
+    serializer_class = CodesecondSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    """docstring for CodeSecondView"""
+    def get_queryset(self):
+        queryset = Codesecond.objects.all()
+        first_code = self.request.query_params.get('first_code', None)
+        if first_code is not None:
+            queryset = queryset.filter(first_code=first_code)
+        return queryset
+
 ##
 ##class TakeBindMilestoneViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
 ##    pagination_class = None

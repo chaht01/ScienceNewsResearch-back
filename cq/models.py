@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 
 class Profile(models.Model):
     user = models.OneToOneField('auth.User', on_delete=models.CASCADE)
-    article = models.ForeignKey('Article', related_name='profiles', null=True)
+    article = models.ForeignKey('Article', related_name='profiles', null=True, on_delete=models.CASCADE)
 
 
 @receiver(post_save, sender=User)
@@ -42,7 +42,7 @@ class Research(models.Model):
 
 
 class Article(models.Model):
-    research = models.ForeignKey('Research', related_name='articles',null=True)
+    research = models.ForeignKey('Research', related_name='articles',null=True, on_delete=models.CASCADE)
     title = models.CharField(max_length=1024)
 #    date = models.DateTimeField()
     publisher = models.CharField(max_length=100)
@@ -55,7 +55,7 @@ class Sentence(models.Model):
     text = models.CharField(max_length=1024)
     paragraph_order = models.IntegerField()
     order = models.IntegerField()
-    article = models.ForeignKey('Article', related_name='sentences',null=True)
+    article = models.ForeignKey('Article', related_name='sentences',null=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.text
@@ -68,33 +68,33 @@ class Codefirst(models.Model):
 
 class Codesecond(models.Model):
     text=models.CharField(max_length=512)
-    first_code=models.ForeignKey('Codefirst', related_name='secondcodes',null=True)
+    first_code=models.ForeignKey('Codefirst', related_name='secondcodes',null=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.text
 
 
 class Question(models.Model):
-    article = models.ForeignKey('Article', related_name='questions',null=True)
+    article = models.ForeignKey('Article', related_name='questions',null=True, on_delete=models.CASCADE)
     text = models.CharField(max_length=512)
-    questioner = models.ForeignKey('auth.User', related_name='questions')
+    questioner = models.ForeignKey('auth.User', related_name='questions', on_delete=models.CASCADE)
     intention = models.CharField(max_length=1024, default='no intention')
 #    created_at=models.DateTimeField(blank=True)
 #    removed_at=models.DateTimeField(blank=True, null=True)
-    code_first=models.ForeignKey('Codefirst', related_name='questions',null=True)
-    code_second=models.ForeignKey('Codesecond', related_name='questions',null=True)
+    code_first=models.ForeignKey('Codefirst', related_name='questions',null=True, on_delete=models.CASCADE)
+    code_second=models.ForeignKey('Codesecond', related_name='questions',null=True, on_delete=models.CASCADE)
     created_step = models.IntegerField(default=0)
     removed_step = models.IntegerField(default=0)
-    copied_from=models.ForeignKey('self', null=True)
+    copied_from=models.ForeignKey('self', on_delete=models.CASCADE)
 
     def __str__(self):
         return self.text
 
 
 class Reftext(models.Model):
-    questioner=models.ForeignKey('auth.User', related_name='reftexts')
-    question=models.ForeignKey('Question', related_name='reftexts',null=True)
-    sentence=models.ForeignKey('Sentence', related_name='reftexts',null=True)
+    questioner=models.ForeignKey('auth.User', related_name='reftexts', on_delete=models.CASCADE)
+    question=models.ForeignKey('Question', related_name='reftexts',null=True, on_delete=models.CASCADE)
+    sentence=models.ForeignKey('Sentence', related_name='reftexts',null=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return 'question-' + str(self.question.id) + ':' \
@@ -102,15 +102,15 @@ class Reftext(models.Model):
                + 'questioner-' +str(self.questioner.id)
 
 class Shown(models.Model):
-    answerer=models.ForeignKey('auth.User', related_name='showns')
-    question=models.ForeignKey('Question', related_name='showns',null=True)
+    answerer=models.ForeignKey('auth.User', related_name='showns', on_delete=models.CASCADE)
+    question=models.ForeignKey('Question', related_name='showns',null=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return 'answerer-' + str(self.answerer.id) + ':' \
                + 'question-' + str(self.question.id)
 
 class Take(models.Model):
-    shown = models.ForeignKey('Shown', related_name='takes',null=True)
+    shown = models.ForeignKey('Shown', related_name='takes',null=True, on_delete=models.CASCADE)
     taken = models.BooleanField()
 
     def __str__(self):
@@ -118,8 +118,8 @@ class Take(models.Model):
                + 'taken-' + str(self.taken)
 
 class Answertext(models.Model):
-    take = models.ForeignKey('Take', related_name='answertexts',null=True)
-    sentence = models.ForeignKey('Sentence', related_name='answertexts',null=True)
+    take = models.ForeignKey('Take', related_name='answertexts',null=True, on_delete=models.CASCADE)
+    sentence = models.ForeignKey('Sentence', related_name='answertexts',null=True, on_delete=models.CASCADE)
  #   answered_at = models.DateTimeField(blank=True)
 
     def __str__(self):
@@ -127,11 +127,11 @@ class Answertext(models.Model):
                + 'sentence-' + str(self.sentence.id)
 
 class Judgement(models.Model):
-    question_first=models.ForeignKey('Question', related_name='judgements_first',null=True)
-    question_second=models.ForeignKey('Question', related_name='judgements_second',null=True)
-    questioner=models.ForeignKey('auth.User', related_name='judgements')
+    question_first=models.ForeignKey('Question', related_name='judgements_first',null=True, on_delete=models.CASCADE)
+    question_second=models.ForeignKey('Question', related_name='judgements_second',null=True, on_delete=models.CASCADE)
+    questioner=models.ForeignKey('auth.User', related_name='judgements', on_delete=models.CASCADE)
     score=models.IntegerField()
-    similarity=models.ForeignKey('Similarity', related_name='judgements',null=True)
+    similarity=models.ForeignKey('Similarity', related_name='judgements',null=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return 'question1-' + str(self.question_first.id) + ':' \
@@ -140,8 +140,8 @@ class Judgement(models.Model):
                + 'score-' + str(self.score)
 
 class Similarity(models.Model):
-    question_first=models.ForeignKey('Question', related_name='similaritys_first',null=True)
-    question_second=models.ForeignKey('Question', related_name='similaritys_second',null=True)
+    question_first=models.ForeignKey('Question', related_name='similaritys_first',null=True, on_delete=models.CASCADE)
+    question_second=models.ForeignKey('Question', related_name='similaritys_second',null=True, on_delete=models.CASCADE)
     similarity=models.FloatField()
 
     def __str__(self):

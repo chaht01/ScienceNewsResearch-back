@@ -76,7 +76,7 @@ class CodesecondSerializer(serializers.ModelSerializer):
     questions = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
-        model = Codefirst
+        model = Codesecond
         fields = '__all__'
 
 
