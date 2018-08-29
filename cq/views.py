@@ -3,18 +3,20 @@ from functools import reduce
 
 from django.http import JsonResponse
 from django.utils.timezone import now
+from datetime import datetime 
 
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from rest_framework.response import Response as HTTPResponse
 from rest_framework import permissions, viewsets, status
 from cq.permission import CustomProfilePermission, CustomUserPermission
-from rest_framework.decorators import detail_route
+from rest_framework.decorators import detail_route, list_route
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
 from cq.models import Article, Research, Question, Profile, Sentence, Codefirst, Codesecond, Reftext, Shown, Take, Answertext, Judgement, Similarity
 from cq.serializers import UserSerializer, ProfileSerializer, ResearchSerializer, ArticleSerializer, QuestionSerializer, \
-    SentenceSerializer, CodefirstSerializer, CodesecondSerializer, ShownSerializer, TakeSerializer, SimilaritySerializer
+    SentenceSerializer, CodefirstSerializer, CodesecondSerializer, ShownSerializer, TakeSerializer,AnswertextSerializer, \
+    ReftextSerializer, JudgementSerializer, SimilaritySerializer
     
 
 
@@ -23,44 +25,27 @@ class ResearchViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     serializer_class = ResearchSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
-    def perform_create(self, serializer):
-        serializer.save(
-            author=self.request.data.get('author'),
-            title=self.request.data.get('title')
-        )
-
-
 class ArticleViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = Article.objects.all()
     serializer_class = ArticleSerializer
     permission_classes = (permissions.IsAuthenticated,)
-
-
-class QuestionViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
-    pagination_class = None
-    serializer_class = QuestionSerializer
-    permission_classes = (permissions.IsAuthenticated,)
-    
-    def get_queryset(self):
-        queryset = Question.objects.all()
-        created_step = self.request.query_params.get('created_step', None)
-        if created_step is not None:
-            queryset = queryset.filter(created_step=created_step)
-        return queryset
-
-    def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
-
 
 class SentenceViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = Sentence.objects.all()
     serializer_class = SentenceSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
+class CodefirstViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+    queryset = Codefirst.objects.all()
+    serializer_class = CodefirstSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+
 class CodesecondViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     queryset = Codesecond.objects.all()
     serializer_class = CodesecondSerializer
     permission_classes = (permissions.IsAuthenticated,)
+
     """docstring for CodeSecondView"""
     def get_queryset(self):
         queryset = Codesecond.objects.all()
@@ -68,6 +53,115 @@ class CodesecondViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         if first_code is not None:
             queryset = queryset.filter(first_code=first_code)
         return queryset
+
+
+class QuestionViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
+    pagination_class = None
+    serializer_class = QuestionSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    
+    def perform_create(self, serializer):
+        serializer.save(questioner=self.request.user, created_at=datetime.now())    
+
+
+    @detail_route(methods=['put'])
+    def delete(self, request,pk=None):
+        removed_step=request.data.get('removed_step')
+        question=self.get_object()
+        serializer=self.get_serializer(question, data={'removed_step':removed_step, 'removed_at':datetime.now()}, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        return HTTPResponse(serializer.data)
+
+    def get_queryset(self):
+        queryset = Question.objects.all()
+        created_step = self.request.query_params.get('created_step', None)
+        if created_step is not None:
+            queryset = queryset.filter(created_step=created_step)
+        return queryset
+    
+
+    # Show samples at Phase 1 - Step 2 
+    # Now just show questions with pk up to 20
+    @detail_route(methods=['get'])
+    def show_samples(self, request):
+        allquestions=Question.objects.all()
+        maxnum=Max(20, allquestions.count())
+        samples=Question.objects.all().order_by('id')[:maxnum]
+        return samples
+
+    # get others' question at Step 4
+    @detail_route(methods=['get'])
+    def get_othersquestion(self, request):
+        question = self.get_object()
+        othersquestions=Question.objects\
+            .filter(article=question.article)\
+            .filter(created_step=4)\
+            .exclude(user=self.request.user)
+        return othersquestions
+        
+
+class ReftextViewSet(NestedViewSetMixin,viewsets.ModelViewSet):
+    queryset = Reftext.objects.all()
+    serializer_class = ReftextSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    def perform_create(self, serializer):
+        serializer.save(questioner=self.request.user)    
+
+
+class ShownViewSet(NestedViewSetMixin,viewsets.ModelViewSet):
+    queryset = Shown.objects.all()
+    serializer_class = ShownSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+class TakeViewSet(NestedViewSetMixin,viewsets.ModelViewSet):
+    queryset = Take.objects.all()
+    serializer_class = TakeSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+class AnswertextViewSet(NestedViewSetMixin,viewsets.ModelViewSet):
+    queryset = Answertext.objects.all()
+    serializer_class = AnswertextSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+
+# Not sure whether we need this
+class JudgementViewSet(NestedViewSetMixin,viewsets.ModelViewSet):
+    queryset = Judgement.objects.all()
+    serializer_class = JudgementSerializer
+    permission_classes = (permissions.IsAuthenticated,)
+    def perform_create(self, serializer):
+        # get question_first_id, question_second_id, score 
+        # get similarity for that 
+        question_first=self.request.data.get('question_first')
+        question_second=self.request.data.get('question_second')
+        if (question_first<question_second):
+            question_smaller=question_first
+            question_larger=question_second
+        else:
+            question_smaller=question_second
+            question_larger=question_second 
+        
+        first_question=Question.objects.filter(id=question_smaller)[0]
+        second_question=Question.objects.filter(id=question_larger)[0]
+
+        related_similarity=Similarity.objects.filter(question_first=first_question, question_second=second_question)
+        if not related_similarity:
+            s_serializer=SimilaritySerializer(data={"question_first":question_smaller, "question_second":question_larger,"similarity":0})
+            s_serializer.is_valid(raise_exception=True)
+            this_similarity=s_serializer.save()
+        else:
+            this_similarity=related_similarity[0]
+        print(this_similarity)
+        serializer.save(questioner=self.request.user, similarity=this_similarity)    
+
+
+# Not sure whether we need this
+class SimilarityViewSet(NestedViewSetMixin,viewsets.ModelViewSet):
+    # Note that similarity only exist for question pairs s.t. question_first_id<question_second_id
+    queryset = Similarity.objects.all()
+    serializer_class = SimilaritySerializer
+    permission_classes = (permissions.IsAuthenticated,)
 
 ##
 ##class TakeBindMilestoneViewSet(NestedViewSetMixin, viewsets.ModelViewSet):

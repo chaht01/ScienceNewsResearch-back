@@ -8,33 +8,39 @@ from cq import views
 
 router = ExtendedSimpleRouter()
 
-articles_router = router.register(r'articles', views.ArticleViewSet, base_name='article')
 
 users_router = router.register(r'users', views.UserViewSet, base_name='user')
 users_router.register(r'profiles', views.ProfileViewSet, base_name='users-profile', parents_query_lookups=['user'])
-#users_router.register(r'takes', views.TakeBindMilestoneViewSet, base_name='users-take', parents_query_lookups=['user'])
 
 researches_router = router.register(r'researches', views.ResearchViewSet, base_name='research')
-researches_router.register(r'questions', views.QuestionViewSet, base_name='researches-question', parents_query_lookups=['research'])
-researches_router.register(r'articles', views.ArticleViewSet, base_name='researches-article', parents_query_lookups=['research'])
+researches_router.register(r'articles', views.ArticleViewSet, base_name='researches-article', parents_query_lookups=['research'])\
 
-#responses_router = router.register(r'responses', views.ResponseViewSet, base_name='response')
+articles_router = router.register(r'articles', views.ArticleViewSet, base_name='article')
+
+sentences_router = router.register(r'sentences',views.SentenceViewSet, base_name='sentence')
+
+codefirsts_router = router.register(r'codefirsts',views.CodefirstViewSet, base_name='codefirst')
+
+codeseconds_router = router.register(r'codeseconds',views.CodesecondViewSet, base_name='codesecond')
 
 questions_router = router.register(r'questions', views.QuestionViewSet, base_name='question')
 #questions_router.register(r'takes', views.TakeBindMilestoneViewSet, base_name='questions-take', parents_query_lookups=['question'])
 
-sentences_router = router.register(r'sentences', views.SentenceViewSet, base_name='sentence')
+reftexts_router = router.register(r'reftexts', views.ReftextViewSet, base_name='reftext')
+
+showns_router = router.register(r'showns',views.ShownViewSet, base_name='shown')
+
+takes_router = router.register(r'takes',views.TakeViewSet, base_name='take')
+
+answertexts_router = router.register(r'answertexts',views.AnswertextViewSet, base_name='answertext')
+
+judgements_router = router.register(r'judgements', views.JudgementViewSet, base_name='judgement')
+
+similaritys_router = router.register(r'similaritys',views.SimilarityViewSet, base_name='similarity')
 
 codesecond_router = router.register(r'codeseconds', views.CodesecondViewSet, base_name='codesecond')
-#takes_router = router.register(r'takes', views.TakeBindMilestoneViewSet, base_name='take')
-#takes_router.register(r'milestones', views.MilestoneViewSet, base_name='takes-milestone', parents_query_lookups=['take'])\
-#    .register(r'responses', views.ResponseViewSet, base_name='takes-milestones-response', parents_query_lookups=['milestone__take', 'milestone'])
-
-#milestones_router = router.register(r'milestones', views.MilestoneViewSet, base_name='milestone')
-#milestones_router.register(r'responses', views.ResponseViewSet, base_name='milestones-response', parents_query_lookups=['milestone'])
 
 profiles_router = router.register(r'profiles', views.ProfileViewSet, base_name='profile')
-
 
 
 
@@ -51,4 +57,3 @@ urlpatterns = [
     url(r'^api-auth/', include('rest_framework.urls', namespace='rest_framework')),
 ]
 
-# urlpatterns = format_suffix_patterns(urlpatterns)

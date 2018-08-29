@@ -3,13 +3,11 @@ from functools import reduce
 from django.contrib.auth.models import User
 from rest_framework import serializers
 from cq.models import Article, Research, Question, Profile, Sentence, Codefirst, Codesecond, Reftext, Shown, Take, Answertext, Judgement, Similarity
-
+from datetime import datetime
 class UserSerializer(serializers.ModelSerializer):
     questions = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     reftexts = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     showns = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    judgements = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    profile = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     judgements = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
@@ -24,6 +22,7 @@ class UserSerializer(serializers.ModelSerializer):
 class ProfileSerializer(serializers.ModelSerializer):
     research = serializers.SerializerMethodField('research_id')
 
+
     def research_id(self, profile):
         if profile.article is not None:
             return profile.article.research.id
@@ -32,21 +31,25 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = '__all__'
-
+ 
 
 class ResearchSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(max_length=1024)
+    author = serializers.CharField(max_length=1024)
+    link = serializers.CharField(max_length=1024)
+   
     articles = serializers.PrimaryKeyRelatedField(many=True,  read_only=True)
-    questions = serializers.PrimaryKeyRelatedField(many=True,  read_only=True)
 
     class Meta:
         model = Research
         fields = '__all__'
-        read_only_fields = ('articles', 'questions')
-
 
 class ArticleSerializer(serializers.ModelSerializer):
+    title = serializers.CharField(max_length=1024)
+    publisher = serializers.CharField(max_length=100)
+    link = serializers.CharField(max_length=1024)
+
     sentences = serializers.PrimaryKeyRelatedField(many=True,  read_only=True)
-    takes = serializers.PrimaryKeyRelatedField(many=True,  read_only=True)
     profiles = serializers.PrimaryKeyRelatedField(many=True,  read_only=True)
     questions = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
@@ -55,24 +58,30 @@ class ArticleSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class SentenceSerializer(serializers.ModelSerializer):
+    text = serializers.CharField(max_length=1024)
+    paragraph_order = serializers.IntegerField()
+    order=serializers.IntegerField()
+
     reftexts = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     answertexts = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    
 
     class Meta:
         model = Sentence
         fields = '__all__'
-        read_only_fields = ('reftexts', )
 
 
 class CodefirstSerializer(serializers.ModelSerializer):
-    questions = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    text = serializers.CharField(max_length=512)
 
+    questions = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    secondcodes = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     class Meta:
         model = Codefirst
         fields = '__all__'
 
 class CodesecondSerializer(serializers.ModelSerializer):
+    text = serializers.CharField(max_length=512)
+
     questions = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
@@ -81,40 +90,67 @@ class CodesecondSerializer(serializers.ModelSerializer):
 
 
 class QuestionSerializer(serializers.ModelSerializer):
+    text = serializers.CharField(max_length=512)
+    intention = serializers.CharField(max_length=1024)
+    created_at = serializers.DateTimeField(default=datetime.now)
+    removed_at = serializers.DateTimeField(required=False)
+    created_step = serializers.IntegerField(default=0)
+    removed_step = serializers.IntegerField(required=False)
+
     questioner = serializers.ReadOnlyField(source='questioner.username')
     reftexts = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     showns = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    judgements_first = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    judgements_second = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    judgement_firsts = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    judgement_seconds = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    similarity_firsts = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    similarity_seconds = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Question
         fields = '__all__'
 
+class ReftextSerializer(serializers.ModelSerializer):
+    questioner = serializers.ReadOnlyField(source='questioner.username')
+   
+    class Meta:
+        model= Reftext
+        fields='__all__'
+
 class ShownSerializer(serializers.ModelSerializer):
+    answerer = serializers.ReadOnlyField(source='answerer.username')
     takes = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
 
     class Meta:
         model = Shown
         fields = '__all__'
-        read_only_fields = ('reftexts', )
 
 
 class TakeSerializer(serializers.ModelSerializer):
-    user = serializers.ReadOnlyField(source='user.username')
+    taken = serializers.BooleanField()
+
     answertexts = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-
-
-
     class Meta:
         model = Take
         fields = '__all__'
 
+class AnswertextSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Answertext
+        fields= '__all__'
+
+class JudgementSerializer(serializers.ModelSerializer):
+    score = serializers.IntegerField()
+    questioner = serializers.ReadOnlyField(source='questioner.username')
+ 
+    class Meta:
+        model = Judgement
+        fields= '__all__'
 
 class SimilaritySerializer(serializers.ModelSerializer):
-    similaritys_first = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    similaritys_second = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    similarity = serializers.FloatField()
 
+    judgements = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+   
     class Meta:
         model = Similarity
         fields = '__all__'
