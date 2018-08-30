@@ -124,6 +124,8 @@ class AnswertextViewSet(NestedViewSetMixin,viewsets.ModelViewSet):
     queryset = Answertext.objects.all()
     serializer_class = AnswertextSerializer
     permission_classes = (permissions.IsAuthenticated,)
+    def perform_create(self, serializer):
+        serializer.save(answerer=self.request.user)    
 
 # Not sure whether we need this
 class JudgementViewSet(NestedViewSetMixin,viewsets.ModelViewSet):
