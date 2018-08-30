@@ -5,6 +5,7 @@ from django.dispatch import receiver
 from django.contrib.auth.models import User
 from datetime import datetime
 
+
 class Profile(models.Model):
     user = models.OneToOneField('auth.User', on_delete=models.CASCADE)
     article = models.ForeignKey('Article', related_name='profiles', null=True, on_delete=models.CASCADE)
@@ -48,7 +49,9 @@ class Article(models.Model):
     link = models.CharField(max_length=1024)
 
     def __str__(self):
+
         return self.title
+
 
 class Sentence(models.Model):
     text = models.CharField(max_length=1024)
@@ -65,56 +68,69 @@ class Codefirst(models.Model):
     def __str__(self):
         return self.text
 
+
 class Codesecond(models.Model):
     text=models.CharField(max_length=512)
-    first_code=models.ForeignKey('Codefirst', related_name='secondcodes',null=True, on_delete=models.CASCADE)
+    code_first=models.ForeignKey('Codefirst', related_name='code_seconds',null=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return self.text
 
 
 class Question(models.Model):
-    article = models.ForeignKey('Article', related_name='questions',null=True, on_delete=models.CASCADE)
+    article = models.ForeignKey('Article', related_name='questions', on_delete=models.CASCADE)
     text = models.CharField(max_length=512)
     questioner = models.ForeignKey('auth.User', related_name='questions', on_delete=models.CASCADE)
     intention = models.CharField(max_length=1024, default='no intention')
-    created_at=models.DateTimeField(default=datetime.now)
+    created_at=models.DateTimeField(auto_now_add=True)
     removed_at=models.DateTimeField(null=True)
-    code_first=models.ForeignKey('Codefirst', related_name='questions',null=True, on_delete=models.CASCADE)
-    code_second=models.ForeignKey('Codesecond', related_name='questions',null=True, on_delete=models.CASCADE)
-    created_step = models.IntegerField(default=0)
+    code_first=models.ForeignKey('Codefirst', related_name='questions', on_delete=models.CASCADE)
+    code_second=models.ForeignKey('Codesecond', related_name='questions', null=True, on_delete=models.CASCADE)
+    created_step = models.IntegerField(default=1)
     removed_step = models.IntegerField(null=True)
-    copied_from=models.ForeignKey('self', on_delete=models.CASCADE, null=True)
+    copied_to=models.ForeignKey('self', on_delete=models.CASCADE, null=True)
 
     def __str__(self):
         return self.text
 
 
 class Reftext(models.Model):
-    questioner=models.ForeignKey('auth.User', related_name='reftexts', on_delete=models.CASCADE)
-    question=models.ForeignKey('Question', related_name='reftexts',null=True, on_delete=models.CASCADE)
-    sentence=models.ForeignKey('Sentence', related_name='reftexts',null=True, on_delete=models.CASCADE)
+    questioner = models.ForeignKey('auth.User', related_name='reftexts', on_delete=models.CASCADE)
+    question = models.ForeignKey('Question', related_name='reftexts', null=True, on_delete=models.CASCADE)
+    sentence = models.ForeignKey('Sentence', related_name='reftexts', null=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return 'question-' + str(self.question.id) + ':' \
                + 'sentence-' + str(self.sentence.id) +':'\
                + 'questioner-' +str(self.questioner.id)
 
+
 class Shown(models.Model):
-    answerer=models.ForeignKey('auth.User', related_name='showns', on_delete=models.CASCADE)
-    question=models.ForeignKey('Question', related_name='showns',null=True, on_delete=models.CASCADE)
+    answerer = models.ForeignKey('auth.User', related_name='showns', on_delete=models.CASCADE)
+    question = models.ForeignKey('Question', related_name='showns',null=True, on_delete=models.CASCADE)
 
     def __str__(self):
         return 'answerer-' + str(self.answerer.id) + ':' \
                + 'question-' + str(self.question.id)
 
+
+@receiver(post_save, sender=Shown)
+def create_take(sender, instance, created, **kwargs):
+    if created:
+        Take.objects.create(
+            shown=instance,
+            taken=False
+        )
+
+
 class Take(models.Model):
-    shown = models.ForeignKey('Shown', related_name='takes',null=True, on_delete=models.CASCADE)
+    shown = models.ForeignKey('Shown', related_name='takes', null=True, on_delete=models.CASCADE)
     taken = models.BooleanField()
 
     def __str__(self):
         return 'shown-' + str(self.shown.id) + ':' \
                + 'taken-' + str(self.taken)
+
 
 class Answertext(models.Model):
     take = models.ForeignKey('Take', related_name='answertexts',null=True, on_delete=models.CASCADE)
@@ -124,6 +140,7 @@ class Answertext(models.Model):
     def __str__(self):
         return 'take-' + str(self.take.id) + ':' \
                + 'sentence-' + str(self.sentence.id)
+
 
 class Judgement(models.Model):
     question_first=models.ForeignKey('Question', related_name='judgement_firsts',null=True, on_delete=models.CASCADE)
@@ -138,6 +155,7 @@ class Judgement(models.Model):
                + 'questioner-' + str(self.questioner.id) + ':' \
                + 'score-' + str(self.score)
 
+
 class Similarity(models.Model):
     question_first=models.ForeignKey('Question', related_name='similarity_firsts',null=True, on_delete=models.CASCADE)
     question_second=models.ForeignKey('Question', related_name='similarity_seconds',null=True, on_delete=models.CASCADE)
@@ -148,33 +166,3 @@ class Similarity(models.Model):
                + 'question2-' + str(self.question_second.id) + ':' \
                + 'similarity-' + str(self.similarity)
 
-""" class Take(models.Model):
-    article = models.ForeignKey('Article', on_delete=models.CASCADE, related_name='takes')
-    question = models.ForeignKey('Question', on_delete=models.CASCADE, related_name='takes')
-    user = models.ForeignKey('auth.User', related_name='takes')
-    phase = models.IntegerField()
-    created_at = models.DateTimeField(auto_now_add=True)
-    remove = models.BooleanField(default=False)
-    removed_phase = models.IntegerField(blank=True, null=True)
-    removed_at = models.DateTimeField(blank=True, null=True)
-
-    def __str__(self):
-        return 'article-' + str(self.article.id) + ':' \
-               + 'question-' + str(self.question.id) + ':' \
-               + 'user-' + str(self.user.id)
-
-
-class Response(models.Model):
-    milestone = models.ForeignKey('Milestone', related_name='responses', null=True)
-    user = models.ForeignKey('auth.User', related_name='responses')
-    sentence = models.ForeignKey('Sentence', related_name='responses', null=True)
-
-
-class Milestone(models.Model):
-    user = models.ForeignKey('auth.User', related_name='milestones')
-    take = models.ForeignKey('Take', related_name='milestones')
-    found = models.NullBooleanField()
-    like_cnt = models.IntegerField(default=0)
-    response_at = models.DateTimeField(auto_now_add=True)
-    copied_from = models.ForeignKey('Milestone', related_name='milestones', null=True)
- """

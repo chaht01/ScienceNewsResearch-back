@@ -13,7 +13,8 @@ users_router = router.register(r'users', views.UserViewSet, base_name='user')
 users_router.register(r'profiles', views.ProfileViewSet, base_name='users-profile', parents_query_lookups=['user'])
 
 researches_router = router.register(r'researches', views.ResearchViewSet, base_name='research')
-researches_router.register(r'articles', views.ArticleViewSet, base_name='researches-article', parents_query_lookups=['research'])\
+researches_router.register(r'articles', views.ArticleViewSet, base_name='researches-article', parents_query_lookups=['research'])
+researches_router.register(r'questions', views.QuestionViewSet, base_name='researches-question', parents_query_lookups=['research'])
 
 articles_router = router.register(r'articles', views.ArticleViewSet, base_name='article')
 
