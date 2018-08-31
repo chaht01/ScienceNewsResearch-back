@@ -1,7 +1,7 @@
 import itertools
 import random
 from functools import reduce
-
+from django_filters.rest_framework import DjangoFilterBackend
 from django.http import JsonResponse
 from django.utils.timezone import now
 from datetime import datetime
@@ -60,8 +60,11 @@ class CodesecondViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
 
 class QuestionViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
     pagination_class = None
+    queryset = Question.objects.all()
     serializer_class = QuestionSerializer
     permission_classes = (permissions.IsAuthenticated,)
+    filter_backends = (DjangoFilterBackend,)
+    search_fields = ('created_step',)
 
     @staticmethod
     def create_reftexts(user, question, sentence_ids):
@@ -101,34 +104,36 @@ class QuestionViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
 
         return HTTPResponse(serializer.data)
 
-    def get_queryset(self):
-        queryset = Question.objects.all()
-        created_step = self.request.query_params.get('created_step', None)
-        if created_step is not None:
-            queryset = queryset.filter(created_step=created_step)
-        return queryset
+    # def get_queryset(self):
+    #     queryset = self.filter_queryset_by_parents_lookups(
+    #         super(NestedViewSetMixin, self).get_queryset()
+    #     )
+    #     created_step = self.request.query_params.get('created_step', None)
+    #     if created_step is not None:
+    #         queryset = queryset.filter(created_step=created_step)
+    #     return queryset
 
 
 
 
     # Show samples at Phase 1 - Step 2
     # Now just show questions with pk up to 20
-    @detail_route(methods=['get'])
-    def show_samples(self, request):
-        allquestions=Question.objects.all()
-        maxnum=Max(20, allquestions.count())
-        samples=Question.objects.all().order_by('id')[:maxnum]
-        return samples
-
-    # get others' question at Step 4
-    @detail_route(methods=['get'])
-    def get_othersquestion(self, request):
-        question = self.get_object()
-        othersquestions=Question.objects\
-            .filter(article=question.article)\
-            .filter(created_step=4)\
-            .exclude(user=self.request.user)
-        return othersquestions
+    # @detail_route(methods=['get'])
+    # def show_samples(self, request):
+    #     allquestions=Question.objects.all()
+    #     maxnum=Max(20, allquestions.count())
+    #     samples=Question.objects.all().order_by('id')[:maxnum]
+    #     return samples
+    #
+    # # get others' question at Step 4
+    # @detail_route(methods=['get'])
+    # def get_othersquestion(self, request):
+    #     question = self.get_object()
+    #     othersquestions=Question.objects\
+    #         .filter(article=question.article)\
+    #         .filter(created_step=4)\
+    #         .exclude(user=self.request.user)
+    #     return othersquestions
 
 
 class ReftextViewSet(NestedViewSetMixin,viewsets.ModelViewSet):

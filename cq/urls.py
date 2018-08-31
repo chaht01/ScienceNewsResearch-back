@@ -17,6 +17,7 @@ researches_router.register(r'articles', views.ArticleViewSet, base_name='researc
 researches_router.register(r'questions', views.QuestionViewSet, base_name='researches-question', parents_query_lookups=['research'])
 
 articles_router = router.register(r'articles', views.ArticleViewSet, base_name='article')
+articles_router.register(r'questions', views.QuestionViewSet, base_name='articles-question', parents_query_lookups=['article'])
 
 sentences_router = router.register(r'sentences',views.SentenceViewSet, base_name='sentence')
 
