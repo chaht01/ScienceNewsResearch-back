@@ -127,9 +127,13 @@ class QuestionShownSerializer(serializers.ModelSerializer):
     code_first = CodefirstSerializer(read_only=True)
     code_second = CodesecondSerializer(read_only=True)
     article_title = serializers.SerializerMethodField()
+    article_publisher = serializers.SerializerMethodField()
 
     def get_article_title(self, obj):
         return obj.article.title
+
+    def get_article_publisher(self, obj):
+        return obj.article.publisher
 
     class Meta:
         model = Question
