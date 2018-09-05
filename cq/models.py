@@ -143,26 +143,13 @@ class Answertext(models.Model):
 
 
 class Judgement(models.Model):
-    question_first=models.ForeignKey('Question', related_name='judgement_firsts',null=True, on_delete=models.CASCADE)
-    question_second=models.ForeignKey('Question', related_name='judgement_seconds',null=True, on_delete=models.CASCADE)
-    questioner=models.ForeignKey('auth.User', related_name='judgements', on_delete=models.CASCADE)
-    score=models.IntegerField()
-    similarity=models.ForeignKey('Similarity', related_name='judgements',on_delete=models.CASCADE)
+    question_first = models.ForeignKey('Question', related_name='judgement_firsts', on_delete=models.CASCADE)
+    question_second = models.ForeignKey('Question', related_name='judgement_seconds', null=True, on_delete=models.CASCADE)
+    questioner = models.ForeignKey('auth.User', related_name='judgements', on_delete=models.CASCADE)
+    score = models.IntegerField(default=0)
 
     def __str__(self):
         return 'question1-' + str(self.question_first.id) + ':' \
-               + 'question2-' + str(self.question_second.id) + ':' \
+               + 'question2-' + str(self.question_second.id) if self.question_second is not None else None + ':' \
                + 'questioner-' + str(self.questioner.id) + ':' \
                + 'score-' + str(self.score)
-
-
-class Similarity(models.Model):
-    question_first=models.ForeignKey('Question', related_name='similarity_firsts',null=True, on_delete=models.CASCADE)
-    question_second=models.ForeignKey('Question', related_name='similarity_seconds',null=True, on_delete=models.CASCADE)
-    similarity=models.FloatField()
-
-    def __str__(self):
-        return 'question1-' + str(self.question_first.id) + ':' \
-               + 'question2-' + str(self.question_second.id) + ':' \
-               + 'similarity-' + str(self.similarity)
-

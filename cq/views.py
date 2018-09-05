@@ -14,10 +14,10 @@ from cq.permission import CustomProfilePermission, CustomUserPermission
 from rest_framework.decorators import detail_route, list_route
 from rest_framework_extensions.mixins import NestedViewSetMixin
 
-from cq.models import Article, Research, Question, Profile, Sentence, Codefirst, Codesecond, Reftext, Shown, Take, Answertext, Judgement, Similarity
+from cq.models import Article, Research, Question, Profile, Sentence, Codefirst, Codesecond, Reftext, Shown, Take, Answertext, Judgement
 from cq.serializers import UserSerializer, ProfileSerializer, ResearchSerializer, ArticleSerializer, QuestionSerializer, \
     SentenceSerializer, CodefirstSerializer, CodesecondSerializer, ShownSerializer, TakeSerializer,AnswertextSerializer, \
-    ReftextSerializer, JudgementSerializer, SimilaritySerializer
+    ReftextSerializer, JudgementSerializer
 
 
 class ResearchViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
@@ -95,7 +95,7 @@ class QuestionViewSet(NestedViewSetMixin, viewsets.ModelViewSet):
         return HTTPResponse(serializer.data[:])
 
     @detail_route(methods=['patch', 'put'])
-    def delete(self, request, pk=None):
+    def update_remove(self, request, pk=None):
         removed_step = request.data.get('removed_step')
         question = self.get_object()
         serializer = self.get_serializer(question, data={'removed_step': removed_step, 'removed_at': datetime.now()}, partial=True)
@@ -234,6 +234,41 @@ class JudgementViewSet(NestedViewSetMixin,viewsets.ModelViewSet):
     serializer_class = JudgementSerializer
     permission_classes = (permissions.IsAuthenticated,)
 
+    def create(self, request, *args, **kwargs):
+        Judgement.objects.filter(questioner=self.request.user).filter(score=0).delete() # Delete judgement backdropped
+        judgements = Judgement.objects.filter(questioner=self.request.user)
+        questions_candidates = Question.objects.all()
+        threshold = 10
+        candidates_ids = []
+        if len(questions_candidates) < threshold:
+            samples = questions_candidates
+        else:
+            samples = random.sample(list(questions_candidates), threshold) # Should be redefined(logic)
+        for question in samples:
+            instance = Judgement.objects.create(questioner=self.request.user, question_first=question)
+            candidates_ids.append(instance.id)
+        results = Judgement.objects.filter(id__in=candidates_ids)
+        j_serializer = JudgementSerializer(results, many=True)
+        return HTTPResponse(j_serializer.data[:])
+
+    @detail_route(methods=['patch'])
+    def score(self, request, pk=None):
+        judgement = self.get_object()
+        question_second = Question.objects.filter(id=request.data.pop('question'))
+        score = request.data.pop('score', 0)
+
+
+        # update Judgement
+        serializer = JudgementSerializer(judgement, data={'question_second': question_second,
+                                                          'score': score,
+                                                          })
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return HTTPResponse(serializer.data)
+
+
+"""
     def perform_create(self, serializer):
         # get question_first_id, question_second_id, score
         # get similarity for that
@@ -258,15 +293,16 @@ class JudgementViewSet(NestedViewSetMixin,viewsets.ModelViewSet):
             this_similarity=related_similarity[0]
         print(this_similarity)
         serializer.save(questioner=self.request.user, similarity=this_similarity)
+"""
 
 
 # Not sure whether we need this
-class SimilarityViewSet(NestedViewSetMixin,viewsets.ModelViewSet):
-    pagination_class = None
-    # Note that similarity only exist for question pairs s.t. question_first_id<question_second_id
-    queryset = Similarity.objects.all()
-    serializer_class = SimilaritySerializer
-    permission_classes = (permissions.IsAuthenticated,)
+# class SimilarityViewSet(NestedViewSetMixin,viewsets.ModelViewSet):
+#     pagination_class = None
+#     # Note that similarity only exist for question pairs s.t. question_first_id<question_second_id
+#     queryset = Similarity.objects.all()
+#     serializer_class = SimilaritySerializer
+#     permission_classes = (permissions.IsAuthenticated,)
 
 
 class UserViewSet(NestedViewSetMixin, viewsets.ModelViewSet):

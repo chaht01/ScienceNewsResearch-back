@@ -38,7 +38,7 @@ answertexts_router = router.register(r'answertexts',views.AnswertextViewSet, bas
 
 judgements_router = router.register(r'judgements', views.JudgementViewSet, base_name='judgement')
 
-similaritys_router = router.register(r'similaritys',views.SimilarityViewSet, base_name='similarity')
+# similaritys_router = router.register(r'similaritys',views.SimilarityViewSet, base_name='similarity')
 
 codesecond_router = router.register(r'codeseconds', views.CodesecondViewSet, base_name='codesecond')
 

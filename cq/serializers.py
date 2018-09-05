@@ -2,7 +2,7 @@ import itertools
 from functools import reduce
 from django.contrib.auth.models import User
 from rest_framework import serializers
-from cq.models import Article, Research, Question, Profile, Sentence, Codefirst, Codesecond, Reftext, Shown, Take, Answertext, Judgement, Similarity
+from cq.models import Article, Research, Question, Profile, Sentence, Codefirst, Codesecond, Reftext, Shown, Take, Answertext, Judgement
 from datetime import datetime
 
 
@@ -112,8 +112,6 @@ class QuestionSerializer(serializers.ModelSerializer):
     reftexts = ReftextSerializer(many=True, read_only=True)
     judgement_firsts = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     judgement_seconds = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    similarity_firsts = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-    similarity_seconds = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
     code_first = CodefirstSerializer(read_only=True)
     code_second = CodesecondSerializer(read_only=True)
 
@@ -138,6 +136,16 @@ class QuestionShownSerializer(serializers.ModelSerializer):
     class Meta:
         model = Question
         fields = '__all__'
+
+
+class JudgeQuestionSerializer(serializers.ModelSerializer):
+    questioner = serializers.ReadOnlyField(source='questioner.username')
+    judgement_firsts = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+    judgement_seconds = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+
+    class Meta:
+        model = Question
+        fields = ('id', 'text', 'questioner', 'judgement_firsts', 'judgement_seconds')
 
 
 class AnswertextSerializer(serializers.ModelSerializer):
@@ -168,20 +176,20 @@ class ShownSerializer(serializers.ModelSerializer):
 class JudgementSerializer(serializers.ModelSerializer):
     score = serializers.IntegerField()
     questioner = serializers.ReadOnlyField(source='questioner.username')
+    question_first = JudgeQuestionSerializer(read_only=True)
 
     class Meta:
         model = Judgement
         fields= '__all__'
 
 
-class SimilaritySerializer(serializers.ModelSerializer):
-    similarity = serializers.FloatField()
-
-    judgements = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
-
-    class Meta:
-        model = Similarity
-        fields = '__all__'
+# class SimilaritySerializer(serializers.ModelSerializer):
+#     similarity = serializers.FloatField()
+#     judgements = serializers.PrimaryKeyRelatedField(many=True, read_only=True)
+#
+#     class Meta:
+#         model = Similarity
+#         fields = '__all__'
 
 
 """ class ResponseSerializer(serializers.ModelSerializer):

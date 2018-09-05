@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.conf.urls import include, url
-from .models import Article, Research, Question, Profile, Sentence, Codefirst, Codesecond, Reftext, Shown, Take, Answertext, Judgement, Similarity 
+from .models import Article, Research, Question, Profile, Sentence, Codefirst, Codesecond, Reftext, Shown, Take, Answertext, Judgement
 
 admin.site.register(Article)
 admin.site.register(Research)
@@ -14,4 +14,3 @@ admin.site.register(Shown)
 admin.site.register(Take)
 admin.site.register(Answertext)
 admin.site.register(Judgement)
-admin.site.register(Similarity)
