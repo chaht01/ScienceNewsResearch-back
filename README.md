@@ -1,4 +1,5 @@
 > How to deploy?
+
 You just commit and push your code to `deploy` branch.
 But be careful not to commit and merge your database and setting file (db.sqlite3, cq_backend/settings.py)
 If you don't know how to do that precisely, just do like below
@@ -28,6 +29,7 @@ And then, just pull remote origin/deploy source by
 ```
 
 > What if I change my model or make some migrations?
+
 If you change your model and migrate correctly, there must be some new files in `cq/migrations`. 
 It means that after you pull source code from remote, you also should apply migrations to server's database.
 So after pull source with above command, 
