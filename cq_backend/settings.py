@@ -41,6 +41,7 @@ DEBUG = False
 TEMPLATE_DEBUG = True
 
 ALLOWED_HOSTS = [
+    'backend',
     'localhost',
     '.ap-northeast-2.compute.amazonaws.com',
 ]
