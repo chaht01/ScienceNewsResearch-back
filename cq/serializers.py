@@ -126,11 +126,6 @@ class QuestionShownSerializer(serializers.ModelSerializer):
     code_second = CodesecondSerializer(read_only=True)
     article_title = serializers.SerializerMethodField()
     article_publisher = serializers.SerializerMethodField()
-    article_sentences = serializers.SerializerMethodField()
-
-    def get_article_sentences(self, obj):
-        return string.article.sentences
-        
 
     def get_article_title(self, obj):
         return obj.article.title
