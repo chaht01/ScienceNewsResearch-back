@@ -126,18 +126,10 @@ class QuestionShownSerializer(serializers.ModelSerializer):
     code_second = CodesecondSerializer(read_only=True)
     article_title = serializers.SerializerMethodField()
     article_publisher = serializers.SerializerMethodField()
-    reftexts = serializers.SerializerMethodField()
-    refstring = serializers.SerializerMethodField()
+    article_sentences = serializers.SerializerMethodField()
 
-    def get_reftexts(self, obj):
-        return ReftextSerializer(Reftext.objects.filter(question=obj.id), many=True).data
-
-    def get_refstring(self,obj):
-        reftextitems=get_reftexts(self, obj)
-        string =''
-        for reftext in reftextitems:
-            string=string+' '+reftext.sentence.text
-        return string
+    def get_article_sentences(self, obj):
+        return string.article.sentences
         
 
     def get_article_title(self, obj):
