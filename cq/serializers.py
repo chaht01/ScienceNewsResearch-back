@@ -99,6 +99,7 @@ class CodefirstSerializer(serializers.ModelSerializer):
 
 class ReftextSerializer(serializers.ModelSerializer):
     questioner = serializers.ReadOnlyField(source='questioner.username')
+    sentence_text = serializers.SerializerMethodField()
 
     class Meta:
         model= Reftext
@@ -127,15 +128,10 @@ class QuestionShownSerializer(serializers.ModelSerializer):
     reftexts = ReftextSerializer(many=True, read_only=True)
     article_title = serializers.SerializerMethodField()
     article_publisher = serializers.SerializerMethodField()
-    reftextStrings = serializers.SerializerMethodField()
+    reftexts = serializers.SerializerMethodField()
 
-    def get_reftextStrings(self, obj):
-        reftexts=Reftext.objects.filter(question=obj.id)
-        string=''
-        for reftext in reftexts:
-            string=string+' '+reftext.sentence.text
-        return string
-
+    def get_reftexts(self, obj):
+        return ReftextSerializer(Reftext.objects.filter(question=obj.id), many=True).data
 
     def get_article_title(self, obj):
         return obj.article.title
