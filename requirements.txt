@@ -20,7 +20,7 @@ jsonfield==2.0.2
 kombu==4.1.0
 Markdown==2.6.10
 MarkupSafe==1.0
-numpy==1.13.3
+numpy==1.22.0
 protobuf==3.5.1
 psutil==5.4.2
 PyJWT==1.5.3
